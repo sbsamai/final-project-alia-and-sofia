@@ -66,7 +66,7 @@ def setup_database():
     conn.commit()
     return conn
 
-def get_weather(city):
+def read_weather_data(city):
     params = {
         "access_key": weatherstack_api,
         "query": city,
@@ -75,13 +75,13 @@ def get_weather(city):
     response = requests.get(weather_url, params = params)
     return response.json()
 
-def get_crime_data(state):
+def read_crime_data(state):
     url = f"{crime_url}/{state}/violent-crime/2019/2019"
     params = {"api_key": crime_data_api}
     response = requests.get(url, params = params)
     return response.json()
 
-def insert_weather_data(conn, cities):
+def build_weather_table(conn, cities):
     cursor = conn.cursor()
     cursor.execute("SELECT city_name FROM cities")
     existing_cities = {row[0] for row in cursor.fetchall()}
@@ -91,7 +91,7 @@ def insert_weather_data(conn, cities):
             break
         if city in existing_cities:
              continue
-        data = get_weather(city)
+        data = read_weather_data(city)
         if "current" not in data:
             continue
         cursor.execute("""
@@ -121,7 +121,7 @@ def insert_weather_data(conn, cities):
     conn.commit()
     print(f"Inserted {count} NEW weather rows this run")
 
-def insert_crime_data(conn, cities):
+def build_crime_table(conn, cities):
     cursor = conn.cursor()
     count = 0
     for city in cities:
@@ -135,7 +135,7 @@ def insert_crime_data(conn, cities):
             continue
         city_id = result[0]
         state = city_states[city]
-        data = get_crime_data(state)
+        data = read_crime_data(state)
         if "results" not in data:
             continue
         for entry in data["results"]:
@@ -164,8 +164,8 @@ def insert_crime_data(conn, cities):
 
 if __name__ == "__main__":
     conn = setup_database()
-    insert_weather_data(conn, cities)
-    insert_crime_data(conn, cities)
+    build_weather_table(conn, cities)
+    build_crime_table(conn, cities)
     conn.close()
 
 
