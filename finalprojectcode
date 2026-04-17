@@ -20,30 +20,90 @@ cities = [
     "Albuquerque", "Memphis", "Chattanooga", "Fort Worth", "Boulder", "Oklahoma City"
 ]
 
-def setup_weather_database():
-    conn = sqlite3.connect("weather_data.db")
+def setup_database():
+    conn = sqlite3.connect("final_data.db")
     cursor = conn.cursor()
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS weather_data (
+        CREATE TABLE IF NOT EXISTS cities (
                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                   city TEXT,
-                   country TEXT,
+                   city_name TEXT UNIQUE)
+                   """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS weather (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   city_id INTEGER,
                    temperature_f REAL,
-                   feels_like_f REAL
+                   feels_like_f REAL,
                    humidity INTEGER,
                    wind_speed_mph REAL,
                    weather_description TEXT,
                    observation_time TEXT,
-                   fetched_at TEXT)
+                   fetched_at TEXT,
+                   FOREIGN KEY(city_id) REFERENCES cities(id))
                    """)
     conn.commit()
     return conn
 
+def get_weather(city):
+    params = {
+        "access_key": weatherstack_api,
+        "query": city,
+        "units": "f"
+    }
+    response = requests.get(weather_url, params = params)
+    return response.json()
 
-def setup_crime_database():
-    conn = sqlite3.connect("crime_data.db")
+def insert_weather_data(conn, cities):
     cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS crime_data (
-                   )
-                   """)
+    count = 0
+    for city in cities:
+        if count >= 25:
+            break
+        data = get_weather(city)
+        if "current" not in data:
+            continue
+        cursor.execute("""
+            INSERT OR IGNORE INTO cities (city_name)
+            VALUES (?)
+                       """, (city,))
+        cursor.execute("""
+            SELECT id FROM cities WHERE city_name = ?
+                       """, (city))
+        city_id = cursor.fetchone()[0]
+        timestamp = datetime.now().isoformat()
+        cursor.execute("""
+            INSERT INTO weather (
+                       city_id, temperature_f, feels_like_f, humidity,
+                       wind_speed_mph, weather_description,
+                       observation_time, fetched_at)
+                       VALUES (?,?,?,?,?,?,?,?)
+                       """, (
+                           city_id,
+                           data["current"]["temperature"],
+                           data["current"]["feelslike"],
+                           data["current"]["humidity"],
+                           data["current"]["wind_speed"],
+                           data["current"]["weather_descriptions"][0],
+                           data["location"]["localtime"],
+                           timestamp
+                       ))
+        count += 1
+    conn.commit()
+    print(f"Inserted {count} rows this run")
+
+
+
+
+
+
+
+
+
+
+
+    if __name__ == "__main__":
+        conn = setup_database()
+        insert_weather_data(conn, cities)
+        conn.close()
+
+
