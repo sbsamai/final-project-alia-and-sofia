@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 weatherstack_api = "d01f570e6b84bcb1a18c981462cd59a3"
-weather_url = "http://api.weatherstack.com/current"
+weather_url = "https://api.usa.gov/crime/fbi/sapi/api/summarized/state"
 
 crime_data_api = "VOGY9tV90tYpHSJheAtRnvhy2FwcOdw13dxmJ6cT"
 crime_url = "https://api.usa.gov/crime/fbi/cde"
@@ -19,6 +19,17 @@ cities = [
     "Atlanta", "Minneapolis", "Tulsa", "Kansas City", "Fresno", "Tucson", "Louisville",
     "Albuquerque", "Memphis", "Chattanooga", "Fort Worth", "Boulder", "Oklahoma City"
 ]
+
+city_states = {
+     "New York": "NY", "Los Angeles": "CA", "Chicago": "IL", "Boston": "MA", "Seattle": "WA", "Ann Arbor": "MI", 
+    "Philadelphia": "PA", "Detroit": "MI", "Pittsburgh": "PA", "Houston": "TX", "Dallas": "TX", "Austin": "TX", 
+    "San Francisco": "CA", "Sacramento": "CA", "Oakland": "CA", "San Diego": "CA", "Las Vegas": "NV", "Salt Lake City": "UT",
+    "Jacksonville": "FL", "Miami": "FL", "Burlington": "VT", "Spokane": "WA", "San Antonio": "TX", "Charlottesville": "VA", 
+    "Durham": "NC", "Hartford": "CT", "Denver": "CO", "Omaha": "NE", "Phoenix": "AZ", "Columbus": "OH", "Cincinnati": "OH", 
+    "Nashville": "TN", "Charlotte": "NC", "Indianapolis": "IN", "Portland": "OR", "Baltimore": "MD", "Milwaukee": "WI", 
+    "Atlanta": "GA", "Minneapolis": "MN", "Tulsa": "OK", "Kansas City": "MO", "Fresno": "CA", "Tucson": "AZ", "Louisville": "KY",
+    "Albuquerque": "NM", "Memphis": "TN", "Chattanooga": "TN", "Fort Worth": "TX", "Boulder": "CO", "Oklahoma City": "OK"
+}
 
 def setup_database():
     conn = sqlite3.connect("final_data.db")
@@ -41,6 +52,17 @@ def setup_database():
                    fetched_at TEXT,
                    FOREIGN KEY(city_id) REFERENCES cities(id))
                    """)
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS crime (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   city_id INTEGER,
+                   offense TEXT,
+                   offense_count INTEGER,
+                   year INTEGER,
+                   UNIQUE(city_id, offense, year),
+                   FOREIGN KEY(city_id) REFERENCES cities(id))
+                   """)
     conn.commit()
     return conn
 
@@ -53,12 +75,22 @@ def get_weather(city):
     response = requests.get(weather_url, params = params)
     return response.json()
 
+def get_crime_data(state):
+    url = f"{crime_url}/{state}/violent-crime/2019/2019"
+    params = {"api_key": crime_data_api}
+    response = requests.get(url, params = params)
+    return response.json()
+
 def insert_weather_data(conn, cities):
     cursor = conn.cursor()
+    cursor.execute("SELECT city_name FROM cities")
+    existing_cities = {row[0] for row in cursor.fetchall()}
     count = 0
     for city in cities:
         if count >= 25:
             break
+        if city in existing_cities:
+             continue
         data = get_weather(city)
         if "current" not in data:
             continue
@@ -66,9 +98,7 @@ def insert_weather_data(conn, cities):
             INSERT OR IGNORE INTO cities (city_name)
             VALUES (?)
                        """, (city,))
-        cursor.execute("""
-            SELECT id FROM cities WHERE city_name = ?
-                       """, (city))
+        cursor.execute("SELECT id FROM cities WHERE city_name = ?", (city,))
         city_id = cursor.fetchone()[0]
         timestamp = datetime.now().isoformat()
         cursor.execute("""
@@ -89,7 +119,41 @@ def insert_weather_data(conn, cities):
                        ))
         count += 1
     conn.commit()
-    print(f"Inserted {count} rows this run")
+    print(f"Inserted {count} NEW weather rows this run")
+
+def insert_crime_data(conn, cities):
+    cursor = conn.cursor()
+    count = 0
+    for city in cities:
+        if count >= 25:
+            break
+        if city not in city_states:
+            continue
+        cursor.execute("SELECT id FROM cities WHERE city_name =?", (city,))
+        result = cursor.fetchone()
+        if not result:
+            continue
+        city_id = result[0]
+        state = city_states[city]
+        data = get_crime_data(state)
+        if "results" not in data:
+            continue
+        for entry in data["results"]:
+            cursor.execute("""
+                INSERT OR IGNORE INTO crime (
+                           city_id, offense, offense_count, year)
+                           VALUES (?,?,?,?)
+                           """, (
+                               city_id,
+                               entry.get("offense"),
+                               entry.get("actual"),
+                               entry.get("year")
+                           ))
+            count += 1
+            if count >= 25:
+                break
+            conn.commit()
+            print(f"Inserted {count} NEW crime rows this run")
 
 
 
@@ -98,12 +162,10 @@ def insert_weather_data(conn, cities):
 
 
 
-
-
-
-    if __name__ == "__main__":
-        conn = setup_database()
-        insert_weather_data(conn, cities)
-        conn.close()
+if __name__ == "__main__":
+    conn = setup_database()
+    insert_weather_data(conn, cities)
+    insert_crime_data(conn, cities)
+    conn.close()
 
 
