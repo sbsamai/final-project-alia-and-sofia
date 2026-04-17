@@ -158,7 +158,33 @@ def build_crime_table(conn, cities):
 
 
 
+### THE FOLLOWING FUNCTIONS ARE FOR THE CALCULATION PORTION OF THE PROJECT
 
+def calculate_average_temp(conn):
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT cities.city_name, AVG(weather.temperature_f)
+        FROM weather
+        JOIN cities ON weather.city_id = cities.id
+        GROUP BY cities.city_name
+        ORDER BY cities.city_name
+                   """)
+    results = cursor.fetchall()
+    avg_temps = {city: round(avg, 2) for city, avg in results}
+    return sorted(avg_temps.items(), key=lambda x: x[1], reverse=True)
+
+def calculate_average_feels_like(conn):
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT cities.city_name, AVG(weather.feels_like_f)
+        FROM weather
+        JOIN cities ON weather.city_id = cities.id
+        GROUP BY cities.city_name
+        ORDER BY cities.city_name
+                   """)
+    results = cursor.fetchall()
+    avg_feels = {city: round(avg, 2) for city, avg in results}
+    return sorted(avg_feels.items(), key=lambda x: x[1], reverse=True)
 
 
 
