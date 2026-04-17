@@ -1,0 +1,49 @@
+import sqlite3
+import requests
+import json
+from datetime import datetime
+
+weatherstack_api = "d01f570e6b84bcb1a18c981462cd59a3"
+weather_url = "http://api.weatherstack.com/current"
+
+crime_data_api = "VOGY9tV90tYpHSJheAtRnvhy2FwcOdw13dxmJ6cT"
+crime_url = "https://api.usa.gov/crime/fbi/cde"
+
+cities = [
+    "New York", "Los Angeles", "Chicago", "Boston", "Seattle", "Ann Arbor", 
+    "Philadelphia", "Detroit", "Pittsburgh", "Houston", "Dallas", "Austin", 
+    "San Francisco", "Sacramento", "Oakland", "San Diego", "Las Vegas", "Salt Lake City",
+    "Jacksonville", "Miami", "Burlington", "Spokane", "San Antonio", "Charlottesville", 
+    "Durham", "Hartford", "Denver", "Omaha", "Phoenix", "Columbus", "Cincinnati", 
+    "Nashville", "Charlotte", "Indianapolis", "Portland", "Baltimore", "Milwaukee", 
+    "Atlanta", "Minneapolis", "Tulsa", "Kansas City", "Fresno", "Tucson", "Louisville",
+    "Albuquerque", "Memphis", "Chattanooga", "Fort Worth", "Boulder", "Oklahoma City"
+]
+
+def setup_weather_database():
+    conn = sqlite3.connect("weather_data.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS weather_data (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   city TEXT,
+                   country TEXT,
+                   temperature_f REAL,
+                   feels_like_f REAL
+                   humidity INTEGER,
+                   wind_speed_mph REAL,
+                   weather_description TEXT,
+                   observation_time TEXT,
+                   fetched_at TEXT)
+                   """)
+    conn.commit()
+    return conn
+
+
+def setup_crime_database():
+    conn = sqlite3.connect("crime_data.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS crime_data (
+                   )
+                   """)
