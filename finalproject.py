@@ -51,15 +51,6 @@ def setup_database():
                    """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS hourly_precip (
-                   id INTEGER PRIMARY KEY AUTOINCREMENT,
-                   city_id INTEGER,
-                   datetime TEXT,
-                   precipitation REAL,
-                   UNIQUE(city_id, datetime))
-                   """)
-    
-    cursor.execute("""
         CREATE TABLE IF NOT EXISTS dog_breeds (
                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                    breed_name TEXT UNIQUE,
@@ -92,7 +83,6 @@ def read_weather_data_json():
         "start_date": "2025-03-01",
         "end_date": "2026-03-01",
         "daily": ["temperature_2m_max", "temperature_2m_min"],
-        "hourly": "precipitation",
         "timezone": "auto",
         "temperature_unit": "fahrenheit",
         "wind_speed_unit": "mph",
@@ -113,34 +103,6 @@ def read_weather_data_json():
         # print(f"Elevation: {response.Elevation()} m asl")
         # print(f"Timezone: {response.Timezone()}{response.TimezoneAbbreviation()}")
         # print(f"Timezone difference to GMT+0: {response.UtcOffsetSeconds()}s")
-        
-        # Process hourly data. The order of variables needs to be the same as requested.
-        hourly = response.Hourly()
-        hourly_precipitation = hourly.Variables(0).ValuesAsNumpy()
-        
-        hourly_data = {"date": pd.date_range(
-            start = pd.to_datetime(hourly.Time() + response.UtcOffsetSeconds(), unit = "s", utc = True),
-            end =  pd.to_datetime(hourly.TimeEnd() + response.UtcOffsetSeconds(), unit = "s", utc = True),
-            freq = pd.Timedelta(seconds = hourly.Interval()),
-            inclusive = "left"
-        )}
-        
-        hourly_data["precipitation"] = hourly_precipitation
-        
-        hourly_dataframe = pd.DataFrame(data = hourly_data)
-        # print("\nHourly data\n", hourly_dataframe)
-        
-        for _, row in hourly_dataframe.iterrows():
-            try:
-                cur.execute("""
-                    INSERT INTO hourly_precip (city_id, datetime, precipitation)
-                            VALUES (?,?,?)
-                            """, (city_id,
-                                  str(row["date"]),
-                                  float(row["precipitation"])
-                            ))
-            except sqlite3.IntegrityError:
-                continue
         
         daily = response.Daily()
         daily_temperature_2m_max = daily.Variables(0).ValuesAsNumpy()
