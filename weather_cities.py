@@ -1,0 +1,119 @@
+import sqlite3
+import requests
+import json
+import time
+import openmeteo_requests
+
+import pandas as pd
+import requests_cache
+from retry_requests import retry
+
+cities = [
+     "New York", "Los Angeles", "Chicago", "Boston", "Seattle", "Ann Arbor", 
+     "Philadelphia", "Detroit", "Pittsburgh", "Houston", "Dallas", "Austin", 
+     "San Francisco", "Sacramento", "Oakland", "San Diego", "Las Vegas", "Salt Lake City",
+     "Jacksonville", "Miami", "Burlington", "Spokane", "San Antonio", "Charlottesville", 
+     "Durham", "Hartford", "Denver", "Omaha", "Phoenix", "Columbus", "Cincinnati", 
+     "Nashville", "Charlotte", "Indianapolis", "Portland", "Baltimore", "Milwaukee", 
+     "Atlanta", "Minneapolis", "Tulsa", "Kansas City", "Fresno", "Tucson", "Louisville",
+     "Albuquerque", "Memphis", "Chattanooga", "Fort Worth", "Boulder", "Oklahoma City", "Bozeman",
+     "Bloomfield Hills", "Stratton", "Birmingham", "Selma", "Montgomery", "New Orleans",
+     "Savannah", "New Haven", "New Buffalo", "Wilton", "Athens", "Fort Lauderdale", "Jackson",
+     "Richmond", "Wichita", "Livonia", "Knoxville", "Ithaca", "West Bloomfield", "Royal Oak", 
+     "Anaheim", "La Jolla", "Calabasas", "Darien", "Dexter", "Plymouth", "Westport", "Canton",
+     "Midland", "San Jose", "San Clemente", "Aspen", "Vail", "Jackson Hole", "St. Louis", 
+     "Dalton", "Troy", "Litchfield", "Providence", "Malibu", "Syracuse", "Buffalo", "Albany",
+     "Tallahassee", "Anchorage", "Orlando", "Jensen Beach", "New Milford", "Trenton"
+ ]
+
+
+# def read_weather_data(city, json_file):
+#     params = {
+#         "access_key": weatherstack_api,
+#         "query": city,
+#         "units": "f"
+#     }
+#     response = requests.get(weather_url, params=params)
+#     response_json = response.json()
+#     try:
+#         try:
+#             with open(json_file, 'r') as f:
+#                 prev_data = json.load(f)
+#                 prev_data.append(response_json)
+#         except (FileNotFoundError, json.JSONDecodeError):
+#             prev_data = []
+#         prev_data.append(response_json)
+#         with open(json_file, 'w') as f:
+#             json.dump(prev_data, f, indent=2)
+#             print(f'Saved to {json_file}')
+#     except:
+#         return 'Error saving json'
+    
+    
+def load_weather_cities_json():
+        # for city in cities:
+        #     read_weather_data(city, 'city_weather_data.json')
+        #     print(f'Successfully saved {city}')
+        #     time.sleep(2)
+        # Setup the Open-Meteo API client with cache and retry on error
+    cache_session = requests_cache.CachedSession('.cache', expire_after = -1)
+    retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
+    openmeteo = openmeteo_requests.Client(session = retry_session)
+
+    # Make sure all required weather variables are listed here
+    # The order of variables in hourly or daily is important to assign them correctly below
+    url = "https://archive-api.open-meteo.com/v1/archive"
+    params = {
+        "latitude": [40.7143, 34.0522, 41.85, 42.3584, 47.6062, 42.2776, 39.9524, 42.3314, 40.4406, 29.7633, 32.7831, 30.2672, 37.7749, 38.5816, 37.8044, 32.7157, 36.175, 40.7608, 30.3322, 25.7743, 44.4759, 47.6597, 29.4241, 38.0293, 35.994, 41.7637, 39.7392, 41.2563, 33.4484, 39.9612, 39.1271, 36.1659, 35.2271, 39.7684, 45.5234, 39.2904, 43.0389, 33.749, 44.98, 36.154, 39.0997, 36.7477, 32.2217, 38.2542, 35.0845, 35.1495, 35.0456, 32.7254, 40.015, 35.4676, 45.6797, 42.5836, 43.0429, 33.5207, 32.4074, 32.3668, 29.9547, 32.0835, 41.3081, 41.7939, 41.1954, 33.9609, 26.1223, 32.2988, 37.5538, 37.6922, 42.3684, 35.9606, 42.4406, 42.5689, 42.4895, 33.8353, 32.8473, 34.1578, 41.0787, 42.3383, 42.3714, 41.1415, 42.3087, 31.9974, 37.3394, 33.427, 39.1911, 39.6403, 43.6066, 38.6273, 34.7698, 42.6056, 41.7473, 41.824, 34.0258, 43.0481, 42.8865, 42.6526, 30.4383, 61.2181, 28.5383, 27.2545, 41.577, 40.2171],
+        "longitude": [-74.006, -118.2437, -87.65, -71.0598, -122.3321, -83.7409, -75.1636, -83.0457, -79.9959, -95.3633, -96.8067, -97.7431, -122.4194, -121.4944, -122.2708, -117.1647, -115.1372, -111.8911, -81.6556, -80.1937, -73.2121, -117.4291, -98.4936, -78.4767, -78.8986, -72.6851, -104.9847, -95.9404, -112.074, -82.9988, -84.5144, -86.7844, -80.8431, -86.158, -122.6762, -76.6122, -87.9065, -84.388, -93.2638, -95.9928, -94.5786, -119.7724, -110.9265, -85.7594, -106.6511, -90.049, -85.3097, -97.3208, -105.2706, -97.5164, -111.0386, -83.2455, -72.9109, -86.8025, -87.0211, -86.3, -90.0751, -81.0998, -72.9282, -86.7439, -73.4379, -83.3779, -80.1434, -90.1848, -77.4603, -97.3375, -83.3527, -83.9207, -76.4966, -83.3836, -83.1446, -117.9145, -117.2742, -118.6384, -73.4693, -83.8895, -83.4702, -73.3579, -83.4822, -102.0779, -121.895, -117.612, -106.8175, -106.3742, -110.7385, -90.1979, -84.9702, -83.1499, -73.1887, -71.4128, -118.7804, -76.1474, -78.8784, -73.7562, -84.2807, -149.9003, -81.3792, -80.2298, -73.4085, -74.7429],
+        "start_date": "2025-03-01",
+        "end_date": "2026-03-01",
+        "daily": ["temperature_2m_max", "temperature_2m_min"],
+        "hourly": "precipitation",
+        "timezone": "auto",
+    }
+    responses = openmeteo.weather_api(url, params = params)
+
+    # Process 100 locations
+    for response in responses:
+        print(f"\nCoordinates: {response.Latitude()}°N {response.Longitude()}°E")
+        print(f"Elevation: {response.Elevation()} m asl")
+        print(f"Timezone: {response.Timezone()}{response.TimezoneAbbreviation()}")
+        print(f"Timezone difference to GMT+0: {response.UtcOffsetSeconds()}s")
+        
+        # Process hourly data. The order of variables needs to be the same as requested.
+        hourly = response.Hourly()
+        hourly_precipitation = hourly.Variables(0).ValuesAsNumpy()
+        
+        hourly_data = {"date": pd.date_range(
+            start = pd.to_datetime(hourly.Time() + response.UtcOffsetSeconds(), unit = "s", utc = True),
+            end =  pd.to_datetime(hourly.TimeEnd() + response.UtcOffsetSeconds(), unit = "s", utc = True),
+            freq = pd.Timedelta(seconds = hourly.Interval()),
+            inclusive = "left"
+        )}
+        
+        hourly_data["precipitation"] = hourly_precipitation
+        
+        hourly_dataframe = pd.DataFrame(data = hourly_data)
+        print("\nHourly data\n", hourly_dataframe)
+        
+        # Process daily data. The order of variables needs to be the same as requested.
+        daily = response.Daily()
+        daily_temperature_2m_max = daily.Variables(0).ValuesAsNumpy()
+        daily_temperature_2m_min = daily.Variables(1).ValuesAsNumpy()
+        
+        daily_data = {"date": pd.date_range(
+            start = pd.to_datetime(daily.Time() + response.UtcOffsetSeconds(), unit = "s", utc = True),
+            end =  pd.to_datetime(daily.TimeEnd() + response.UtcOffsetSeconds(), unit = "s", utc = True),
+            freq = pd.Timedelta(seconds = daily.Interval()),
+            inclusive = "left"
+        )}
+        
+        daily_data["temperature_2m_max"] = daily_temperature_2m_max
+        daily_data["temperature_2m_min"] = daily_temperature_2m_min
+        
+
+if __name__ == "__main__":
+    load_weather_cities_json()
+
+
