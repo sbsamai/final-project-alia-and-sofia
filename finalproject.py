@@ -390,8 +390,50 @@ def plot_movie_scores():
     plt.tight_layout()
     plt.show()
 
-  
+# second bonus visual for max pts
+def plot_movie_years():
+    conn = sqlite3.connect("final_data.db")
+    cur = conn.cursor()
 
+    cur.execute("""
+        SELECT year FROM movies
+        WHERE year IS NOT NULL
+    """)
+    data = cur.fetchall()
+    conn.close()
+
+    # convert to decades
+    decades = []
+
+    for row in data:
+        year = row[0]
+        if year != "N/A":
+            y = int(year[:4])
+            decade = (y // 10) * 10   # turns 1997 → 1990
+            decades.append(decade)
+
+    # count how many per decade
+    counts = {}
+    for d in decades:
+        counts[d] = counts.get(d, 0) + 1
+
+    # sort for clean graph
+    sorted_decades = sorted(counts.keys())
+    values = [counts[d] for d in sorted_decades]
+
+    # make labels like "1990s"
+    labels = [str(d) + "s" for d in sorted_decades]
+
+    plt.figure(figsize=(8,5))
+    plt.bar(labels, values, color="pink", edgecolor="black")
+
+    plt.xlabel("Decade")
+    plt.ylabel("Number of Movies")
+    plt.title("Movies by Decade")
+
+    plt.tight_layout()
+    plt.show()
+    
 if __name__ == "__main__":
     read_weather_data_json()
     read_dog_data_json()
@@ -404,3 +446,4 @@ if __name__ == "__main__":
     read_movie_data_json()
     write_movie_results()
     plot_movie_scores() 
+    plot_movie_years()
