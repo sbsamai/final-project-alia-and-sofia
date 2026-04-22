@@ -57,8 +57,19 @@ def setup_database():
                    male_weight TEXT,
                    female_weight TEXT)
                    """)
+    # tmdb
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS movies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT UNIQUE,
+        year TEXT,
+        rating TEXT,
+        metascore INTEGER
+    )
+""")
     conn.commit()
     return conn
+
 
 def read_weather_data_json():
     setup_database()
@@ -201,9 +212,6 @@ def calculate_average_low():
     conn.close()
     return results
 
-read_weather_data_json()
-read_dog_data_json()
-
 def total_male_small_dogs():
     conn = sqlite3.connect("final_data.db")
     cur = conn.cursor()
@@ -272,6 +280,118 @@ def plot_male_dog_weights():
     plt.tight_layout()
     plt.show()
 
+# bonus movie API
+def read_movie_data_json():
+    setup_database()
+    conn = sqlite3.connect("final_data.db")
+    cur = conn.cursor()
+
+    # check how many movies already stored
+    cur.execute("SELECT COUNT(*) FROM movies")
+    total_rows = cur.fetchone()[0]
+
+    if total_rows >= 100:
+        print("Already have 100 movies")
+        conn.close()
+        return
+
+    # enforce 25 per run rule
+    max_per_run = min(25, 100 - total_rows)
+    rows_added = 0
+
+    # list of movies (runs through these over multiple runs)
+    movie_titles = [
+        "Inception", "Titanic", "Avatar", "The Dark Knight", "Interstellar",
+        "Frozen", "Gladiator", "The Matrix", "Joker", "Toy Story",
+        "The Lion King", "Forrest Gump", "Avengers", "Up", "Shrek",
+        "Finding Nemo", "Black Panther", "Iron Man", "Cars", "Coco",
+        "Brave", "Moana", "Soul", "Ratatouille", "Monsters Inc",
+        "The Godfather", "Pulp Fiction", "Fight Club", "The Shawshank Redemption",
+        "La La Land", "Whiplash", "Parasite", "1917", "Dune",
+        "Oppenheimer", "Barbie", "The Social Network", "Get Out", "Her"
+    ]
+
+    for title in movie_titles:
+        if rows_added >= max_per_run:
+            break
+
+        url = f"http://www.omdbapi.com/?apikey=1846eeb9&t={title}"
+
+        try:
+            data = requests.get(url).json()
+
+            if data["Response"] == "True":
+                metascore = data.get("Metascore")
+                metascore = int(metascore) if metascore != "N/A" else None
+
+                cur.execute("""
+                    INSERT OR IGNORE INTO movies (title, year, rating, metascore)
+                    VALUES (?, ?, ?, ?)
+                """, (
+                    data.get("Title"),
+                    data.get("Year"),
+                    data.get("imdbRating"),
+                    metascore
+                ))
+
+                rows_added += 1
+
+        except Exception as e:
+            print(f"Error with {title}: {e}")
+            continue
+
+    conn.commit()
+    conn.close()
+
+
+def average_movie_score():
+    conn = sqlite3.connect("final_data.db")
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT AVG(metascore) FROM movies
+        WHERE metascore IS NOT NULL
+    """)
+
+    result = cur.fetchone()[0]
+    conn.close()
+    return result
+
+
+def write_movie_results():
+    avg = average_movie_score()
+
+    with open("movie_results.txt", "w") as f:
+        f.write(f"Average Metascore across movies: {avg}\n")
+
+# movie visualization       
+def plot_movie_scores():
+    conn = sqlite3.connect("final_data.db")
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT title, metascore FROM movies
+        WHERE metascore IS NOT NULL
+    """)
+    data = cur.fetchall()
+    conn.close()
+
+    titles = [row[0] for row in data]
+    scores = [row[1] for row in data]
+
+    plt.figure(figsize=(10,5))
+    plt.bar(titles, scores)
+
+    plt.xticks(rotation=45)
+    plt.xlabel("Movies")
+    plt.ylabel("Metascore")
+    plt.title("Movie Metascores")
+
+    plt.tight_layout()
+    plt.show()
+
+  
+
 if __name__ == "__main__":
     read_weather_data_json()
     read_dog_data_json()
@@ -281,3 +401,6 @@ if __name__ == "__main__":
     total_male_large_dogs()
     plot_male_dog_weights()
     plot_avg_temps()
+    read_movie_data_json()
+    write_movie_results()
+    plot_movie_scores() 
