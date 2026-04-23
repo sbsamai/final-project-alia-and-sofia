@@ -66,9 +66,8 @@ def setup_database():
     CREATE TABLE IF NOT EXISTS movies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT UNIQUE,
-        year TEXT,
-        rating TEXT,
-        metascore INTEGER
+        year INTEGER,
+        rating REAL
     )
 """)
     conn.commit()
@@ -254,6 +253,10 @@ def total_male_large_dogs():
 
 ## THIS IS THE BONUS API CODE
 
+
+movie_api = "0e6ce50ba26d39a5e9092bdf34fad2da"
+movie_url = "https://api.themoviedb.org/3/search/movie?"
+
 def read_movie_data_json():
     setup_database()
     conn = sqlite3.connect(db_path)
@@ -308,32 +311,37 @@ def read_movie_data_json():
         if rows_added >= max_per_run:
             break
 
-        url = f"https://www.omdbapi.com/?apikey=bb001667&t={title}"
-
         try:
-            data = requests.get(url).json()
+            params = {
+                "api_key": movie_api,
+                "query": title
+            }
+            response = requests.get(movie_url, params=params)
+            data = response.json()
+        
 
-            if data.get("Response") != "True":
-                print(f"FAILED OMDb lookup: {title}")
+            if not data.get("results"):
+                print(f"FAILED TMDb lookup: {title}")
+                continue
+
+            movie = data["results"][0]
+            tmdb_title = movie.get("title")
+            if tmdb_title in existing_titles:
                 continue
             
-            omdb_title = data.get("Title")
-            if omdb_title in existing_titles:
-                continue
-            metascore = data.get("Metascore")
-            metascore = int(metascore) if metascore != "N/A" else None
+            release_date = movie.get("release_date", "")
+            year = release_date[:4] if release_date else None
+
+            rating = movie.get("vote_average")
 
             cur.execute("""
-                    INSERT INTO movies (title, year, rating, metascore)
-                    VALUES (?, ?, ?, ?)
-                """, (
-                    omdb_title,
-                    data.get("Year"),
-                    data.get("imdbRating"),
-                    metascore
-                ))
+                INSERT INTO movies (title, year, rating)
+                VALUES (?,?,?)
+                        """, (tmdb_title,
+                              year,
+                              rating))
 
-            existing_titles.add(omdb_title)
+            existing_titles.add(tmdb_title)
             rows_added += 1
 
         except Exception as e:
@@ -349,8 +357,8 @@ def average_movie_score():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT AVG(metascore) FROM movies
-        WHERE metascore IS NOT NULL
+        SELECT AVG(rating) FROM movies
+        WHERE rating IS NOT NULL
     """)
 
     result = cur.fetchone()[0]
