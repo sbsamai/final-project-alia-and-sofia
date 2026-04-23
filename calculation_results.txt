@@ -1,110 +1,212 @@
 Average High Temperatures by City:
-City 1: 69.80 F
-City 2: 78.80 F
-City 3: 80.78 F
-City 4: 65.81 F
-City 5: 48.29 F
-City 6: 72.32 F
-City 7: 67.01 F
-City 8: 70.70 F
-City 9: 67.01 F
-City 10: 85.01 F
-City 11: 84.02 F
-City 12: 85.37 F
-City 13: 71.96 F
-City 14: 81.86 F
-City 15: 77.39 F
-City 16: 71.69 F
-City 17: 89.96 F
-City 18: 73.73 F
-City 19: 77.36 F
-City 20: 76.01 F
-City 21: 66.02 F
-City 22: 47.98 F
-City 23: 85.82 F
-City 24: 72.86 F
-City 25: 70.97 F
-City 26: 67.37 F
-City 27: 79.52 F
-City 28: 89.33 F
-City 29: 93.74 F
-City 30: 71.78 F
-City 31: 74.30 F
-City 32: 77.54 F
-City 33: 71.69 F
-City 34: 74.48 F
-City 35: 56.93 F
-City 36: 68.99 F
-City 37: 71.14 F
-City 38: 72.32 F
-City 39: 69.89 F
-City 40: 84.83 F
-City 41: 86.99 F
-City 42: 85.91 F
-City 43: 90.77 F
-City 44: 75.29 F
-City 45: 80.78 F
-City 46: 80.69 F
-City 47: 73.76 F
-City 48: 83.57 F
-City 49: 76.82 F
-City 50: 85.01 F
+Albany: 70.07 F
+Albuquerque: 80.78 F
+Anaheim: 74.39 F
+Anchorage: 36.32 F
+Ann Arbor: 72.32 F
+Aspen: 60.89 F
+Athens: 72.50 F
+Atlanta: 72.32 F
+Austin: 85.37 F
+Baltimore: 68.99 F
+Birmingham: 76.73 F
+Bloomfield Hills: 69.08 F
+Boston: 65.81 F
+Boulder: 76.82 F
+Bozeman: 52.71 F
+Buffalo: 53.06 F
+Burlington: 66.02 F
+Calabasas: 72.32 F
+Canton: 71.87 F
+Charlotte: 71.69 F
+Charlottesville: 72.86 F
+Chattanooga: 73.76 F
+Chicago: 80.78 F
+Cincinnati: 74.30 F
+Columbus: 71.78 F
+Dallas: 84.02 F
+Dalton: 72.95 F
+Darien: 67.64 F
+Denver: 79.52 F
+Detroit: 70.70 F
+Dexter: 72.41 F
+Durham: 70.97 F
+Fort Lauderdale: 75.56 F
+Fort Worth: 83.57 F
+Fresno: 85.91 F
+Hartford: 67.37 F
+Houston: 85.01 F
+Indianapolis: 74.48 F
+Ithaca: 70.72 F
+Jackson: 80.33 F
+Jackson Hole: 54.76 F
+Jacksonville: 77.36 F
+Jensen Beach: 78.44 F
+Kansas City: 86.99 F
+Knoxville: 69.17 F
+La Jolla: 72.20 F
+Las Vegas: 89.96 F
+Litchfield: 67.10 F
+Livonia: 71.69 F
+Los Angeles: 78.80 F
+Louisville: 75.29 F
+Malibu: 70.18 F
+Memphis: 80.69 F
+Miami: 76.01 F
+Midland: 86.90 F
+Milwaukee: 71.14 F
+Minneapolis: 69.89 F
+Montgomery: 81.50 F
+Nashville: 77.54 F
+New Buffalo: 77.00 F
+New Haven: 62.96 F
+New Milford: 69.08 F
+New Orleans: 78.08 F
+New York: 69.80 F
+Oakland: 77.39 F
+Oklahoma City: 85.01 F
+Omaha: 89.33 F
+Orlando: 79.88 F
+Philadelphia: 67.01 F
+Phoenix: 93.74 F
+Pittsburgh: 67.01 F
+Plymouth: 71.24 F
+Portland: 56.93 F
+Providence: 64.04 F
+Richmond: 72.77 F
+Royal Oak: 71.24 F
+Sacramento: 81.86 F
+Salt Lake City: 73.73 F
+San Antonio: 85.82 F
+San Clemente: 69.71 F
+San Diego: 71.69 F
+San Francisco: 71.96 F
+San Jose: 85.46 F
+Savannah: 75.47 F
+Seattle: 48.29 F
+Selma: 78.08 F
+Spokane: 47.98 F
+St. Louis: 82.58 F
+Stratton: 59.45 F
+Syracuse: 68.72 F
+Tallahassee: 79.97 F
+Trenton: 67.10 F
+Troy: 70.70 F
+Tucson: 90.77 F
+Tulsa: 84.83 F
+Vail: 58.76 F
+West Bloomfield: 69.62 F
+Westport: 67.82 F
+Wichita: 84.83 F
+Wilton: 67.82 F
 
 Average Low Temperatures by City:
-City 1: 44.51 F
-City 2: 55.67 F
-City 3: 49.91 F
-City 4: 38.90 F
-City 5: 35.24 F
-City 6: 48.74 F
-City 7: 46.49 F
-City 8: 45.14 F
-City 9: 50.63 F
-City 10: 64.58 F
-City 11: 64.22 F
-City 12: 65.48 F
-City 13: 53.87 F
-City 14: 58.19 F
-City 15: 57.95 F
-City 16: 58.10 F
-City 17: 62.60 F
-City 18: 51.23 F
-City 19: 59.99 F
-City 20: 69.44 F
-City 21: 39.74 F
-City 22: 32.95 F
-City 23: 64.22 F
-City 24: 48.38 F
-City 25: 47.57 F
-City 26: 41.18 F
-City 27: 46.04 F
-City 28: 46.67 F
-City 29: 72.77 F
-City 30: 52.88 F
-City 31: 57.20 F
-City 32: 58.82 F
-City 33: 49.46 F
-City 34: 56.21 F
-City 35: 36.41 F
-City 36: 50.81 F
-City 37: 45.85 F
-City 38: 56.03 F
-City 39: 38.66 F
-City 40: 66.47 F
-City 41: 63.50 F
-City 42: 58.64 F
-City 43: 68.81 F
-City 44: 57.65 F
-City 45: 55.49 F
-City 46: 62.96 F
-City 47: 57.29 F
-City 48: 63.59 F
-City 49: 48.56 F
-City 50: 64.04 F
+Albany: 38.57 F
+Albuquerque: 55.49 F
+Anaheim: 56.12 F
+Anchorage: 10.13 F
+Ann Arbor: 48.74 F
+Aspen: 31.46 F
+Athens: 55.67 F
+Atlanta: 56.03 F
+Austin: 65.48 F
+Baltimore: 50.81 F
+Birmingham: 56.93 F
+Bloomfield Hills: 41.81 F
+Boston: 38.90 F
+Boulder: 48.56 F
+Bozeman: 34.53 F
+Buffalo: 41.09 F
+Burlington: 39.74 F
+Calabasas: 57.47 F
+Canton: 46.67 F
+Charlotte: 49.46 F
+Charlottesville: 48.38 F
+Chattanooga: 57.29 F
+Chicago: 49.91 F
+Cincinnati: 57.20 F
+Columbus: 52.88 F
+Dallas: 64.22 F
+Dalton: 58.10 F
+Darien: 42.08 F
+Denver: 46.04 F
+Detroit: 45.14 F
+Dexter: 48.56 F
+Durham: 47.57 F
+Fort Lauderdale: 68.00 F
+Fort Worth: 63.59 F
+Fresno: 58.64 F
+Hartford: 41.18 F
+Houston: 64.58 F
+Indianapolis: 56.21 F
+Ithaca: 43.00 F
+Jackson: 59.81 F
+Jackson Hole: 35.32 F
+Jacksonville: 59.99 F
+Jensen Beach: 70.16 F
+Kansas City: 63.50 F
+Knoxville: 54.86 F
+La Jolla: 57.35 F
+Las Vegas: 62.60 F
+Litchfield: 36.77 F
+Livonia: 44.96 F
+Los Angeles: 55.67 F
+Louisville: 57.65 F
+Malibu: 59.92 F
+Memphis: 62.96 F
+Miami: 69.44 F
+Midland: 61.34 F
+Milwaukee: 45.85 F
+Minneapolis: 38.66 F
+Montgomery: 59.99 F
+Nashville: 58.82 F
+New Buffalo: 50.09 F
+New Haven: 41.63 F
+New Milford: 38.75 F
+New Orleans: 67.82 F
+New York: 44.51 F
+Oakland: 57.95 F
+Oklahoma City: 64.04 F
+Omaha: 46.67 F
+Orlando: 64.13 F
+Philadelphia: 46.49 F
+Phoenix: 72.77 F
+Pittsburgh: 50.63 F
+Plymouth: 44.60 F
+Portland: 36.41 F
+Providence: 40.19 F
+Richmond: 50.81 F
+Royal Oak: 41.00 F
+Sacramento: 58.19 F
+Salt Lake City: 51.23 F
+San Antonio: 64.22 F
+San Clemente: 56.66 F
+San Diego: 58.10 F
+San Francisco: 53.87 F
+San Jose: 59.72 F
+Savannah: 53.96 F
+Seattle: 35.24 F
+Selma: 57.02 F
+Spokane: 32.95 F
+St. Louis: 58.91 F
+Stratton: 32.45 F
+Syracuse: 42.98 F
+Tallahassee: 56.12 F
+Trenton: 45.14 F
+Troy: 41.18 F
+Tucson: 68.81 F
+Tulsa: 66.47 F
+Vail: 34.37 F
+West Bloomfield: 40.91 F
+Westport: 40.28 F
+Wichita: 61.61 F
+Wilton: 40.28 F
 
 Dog Breed Results:
-Total small male dog breeds (under 20 lbs): 11
-Total large male dog breeds (over 50 lbs): 6
+Total small male dog breeds (under 20 lbs): 28
+
+High Temperature Results:
+Total cities with high temperatures above 72 degrees: 54
 
 Movie Results:
 Average movie score: 79.64

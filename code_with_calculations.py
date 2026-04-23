@@ -192,31 +192,39 @@ def read_dog_data_json():
 
 ### THE FOLLOWING FUNCTIONS ARE FOR THE CALCULATION PORTION OF THE PROJECT
 
+## Calculation 1: 
+
 def calculate_average_high():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT city_id, AVG(temp_max)
-        FROM daily_weather
-        GROUP BY city_id
+        SELECT c.city_name, AVG(w.temp_max)
+        FROM daily_weather w
+        JOIN cities c
+                   ON w.city_id = c.city_id
+        GROUP BY c.city_name
                    """)
     results = cursor.fetchall()
     conn.close()
     return results
     
-
+## Calculation 2:
 
 def calculate_average_low():
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("""
-        SELECT city_id, AVG(temp_min)
-        FROM daily_weather
-        GROUP BY city_id
+        SELECT c.city_name, AVG(w.temp_min)
+        FROM daily_weather w
+        JOIN cities c
+                ON w.city_id = c.city_id
+        GROUP BY c.city_name
                 """)
     results = cur.fetchall()
     conn.close()
     return results
+
+## Calculation 3:
 
 def total_male_small_dogs():
     conn = sqlite3.connect(db_path)
@@ -231,62 +239,24 @@ def total_male_small_dogs():
             count += 1
     return count
 
+## Calculation 4:
 
-
-def total_male_large_dogs():
+def count_cities_above_72():
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
-    cur.execute("SELECT male_weight FROM dog_breeds")
-    rows = cur.fetchall()
+    cur.execute("""
+        SELECT COUNT (*)
+        FROM (
+                SELECT c.city_name, AVG(w.temp_max) AS avg_high
+                FROM cities c
+                JOIN daily_weather w
+                    ON c.city_id = w.city_id
+                GROUP BY c.city_name
+                HAVING avg_high > 72)
+                """)
+    result = cur.fetchone()[0]
     conn.close()
-    count = 0
-    for row in rows:
-        weight = json.loads(row[0])
-        if weight["max"] > 50:
-            count += 1
-    return count
-
-
-
-
-### THESE ARE VISUALIZATION FUNCTIONS
-
-# def plot_avg_temps():
-#     conn = sqlite3.connect(db_path)
-#     cur = conn.cursor()
-#     cur.execute("SELECT city_id, city_name FROM cities ORDER BY city_id")
-#     city_rows = cur.fetchall()
-#     conn.close
-    
-#     highs = calculate_average_high()
-#     lows = calculate_average_low()
-#     city_names = [row[1] for row in city_rows]
-#     avg_highs = [row[1] for row in highs]
-#     avg_lows = [row[1] for row in lows]
-
-#     plt.figure(figsize=(12,6))
-#     plt.scatter(city_names, avg_highs, color="purple", s=20, label="Average High")
-#     plt.scatter(city_names, avg_lows, color="red", s=20, label="Average Low")
-#     plt.xlabel("City ID")
-#     plt.ylabel("Temperature (Farenheight)")
-#     plt.title("Average High and Low Temps Across 100 Cities (3/2025 to 3/2026)")
-#     plt.legend()
-#     plt.xticks(rotation=45, ha="right")
-#     plt.tight_layout()
-#     plt.show()
-
-# def plot_male_dog_weights():
-#     small = total_male_small_dogs()
-#     large = total_male_large_dogs()
-#     categories = ["Small (under 20 lbs)", "Large (over 50 lbs)"]
-#     values = [small, large]
-#     plt.bar(categories, values, color=["blue", "red"])
-#     plt.xlabel("Dog Size")
-#     plt.ylabel("Number of Breeds")
-#     plt.title("Total Large and Small Male Dogs")
-#     plt.ylim(0,100)
-#     plt.tight_layout()
-#     plt.show()
+    return result
 
 # bonus movie API
 def read_movie_data_json():
@@ -366,12 +336,6 @@ def average_movie_score():
     return result
 
 
-# def write_movie_results():
-#     avg = average_movie_score()
-
-#     with open("movie_results.txt", "w") as f:
-#         f.write(f"Average Metascore across movies: {avg}\n")
-
 base_dir = Path(__file__).resolve().parent
 
 def write_calculations_to_file(filename="calculation_results.txt"):
@@ -379,94 +343,25 @@ def write_calculations_to_file(filename="calculation_results.txt"):
     avg_highs = calculate_average_high()
     avg_lows = calculate_average_low()
     small_male_dogs = total_male_small_dogs()
-    large_male_dogs = total_male_large_dogs()
+    high_temp_above_72 = count_cities_above_72()
     avg_movie = average_movie_score()
     with open(file_path, "w") as f:
         f.write("Average High Temperatures by City:\n")
         for city_id, avg in avg_highs:
-            f.write(f"City {city_id}: {avg:.2f} F\n")
+            f.write(f"{city_id}: {avg:.2f} F\n")
         f.write("\nAverage Low Temperatures by City:\n")
         for city_id, avg in avg_lows:
-            f.write(f"City {city_id}: {avg:.2f} F\n")
+            f.write(f"{city_id}: {avg:.2f} F\n")
         f.write("\nDog Breed Results:\n")
         f.write(f"Total small male dog breeds (under 20 lbs): {small_male_dogs}\n")
-        f.write(f"Total large male dog breeds (over 50 lbs): {large_male_dogs}\n")
+        f.write("\nHigh Temperature Results:\n")
+        f.write(f"Total cities with high temperatures above 72 degrees: {high_temp_above_72}\n")
         f.write("\nMovie Results:\n")
         if avg_movie is not None:
             f.write(f"Average movie score: {avg_movie:.2f}\n")
         else:
             f.write("Average movie score: No data available\n")
 
-
-# # movie visualization       
-# def plot_movie_scores():
-#     conn = sqlite3.connect(db_path)
-#     cur = conn.cursor()
-
-#     cur.execute("""
-#         SELECT title, metascore FROM movies
-#         WHERE metascore IS NOT NULL
-#     """)
-#     data = cur.fetchall()
-#     conn.close()
-
-#     titles = [row[0] for row in data]
-#     scores = [row[1] for row in data]
-
-#     plt.figure(figsize=(10,5))
-#     plt.bar(titles, scores)
-
-#     plt.xticks(rotation=45)
-#     plt.xlabel("Movies")
-#     plt.ylabel("Metascore")
-#     plt.title("Movie Metascores")
-
-#     plt.tight_layout()
-#     plt.show()
-
-# # second bonus visual for max pts
-# def plot_movie_years():
-#     conn = sqlite3.connect(db_path)
-#     cur = conn.cursor()
-
-#     cur.execute("""
-#         SELECT year FROM movies
-#         WHERE year IS NOT NULL
-#     """)
-#     data = cur.fetchall()
-#     conn.close()
-
-#     # convert to decades
-#     decades = []
-
-#     for row in data:
-#         year = row[0]
-#         if year != "N/A":
-#             y = int(year[:4])
-#             decade = (y // 10) * 10   # turns 1997 → 1990
-#             decades.append(decade)
-
-#     # count how many per decade
-#     counts = {}
-#     for d in decades:
-#         counts[d] = counts.get(d, 0) + 1
-
-#     # sort for clean graph
-#     sorted_decades = sorted(counts.keys())
-#     values = [counts[d] for d in sorted_decades]
-
-#     # make labels like "1990s"
-#     labels = [str(d) + "s" for d in sorted_decades]
-
-#     plt.figure(figsize=(8,5))
-#     plt.bar(labels, values, color="pink", edgecolor="black")
-
-#     plt.xlabel("Decade")
-#     plt.ylabel("Number of Movies")
-#     plt.title("Movies by Decade")
-
-#     plt.tight_layout()
-#     plt.show()
     
 if __name__ == "__main__":
     read_weather_data_json()
@@ -474,11 +369,6 @@ if __name__ == "__main__":
     calculate_average_high()
     calculate_average_low()
     total_male_small_dogs()
-    total_male_large_dogs()
-    # plot_male_dog_weights()
-    # plot_avg_temps()
     read_movie_data_json()
-    # write_movie_results()
-    # plot_movie_scores() 
-    # plot_movie_years()
+    count_cities_above_72()
     write_calculations_to_file()
