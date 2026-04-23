@@ -1,0 +1,14 @@
+print("script started")
+
+import requests
+
+print("requests imported")
+
+try:
+    r = requests.get("https://www.omdbapi.com/?apikey=1846eeb9&t=Inception", timeout=10)
+    print("Status code:", r.status_code)
+    print("Response:", r.text)
+except Exception as e:
+    print("Error:", e)
+
+print("script done")

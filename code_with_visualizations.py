@@ -48,7 +48,6 @@ def setup_database():
         CREATE TABLE IF NOT EXISTS daily_weather (
                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                    city_id INTEGER,
-                   date TEXT,
                    temp_max REAL,
                    temp_min REAL,
                    UNIQUE(city_id, date))
@@ -137,10 +136,9 @@ def read_weather_data_json():
         for _, row in daily_dataframe.iterrows():
             try:
                 cur.execute("""
-                    INSERT INTO daily_weather (city_id, date, temp_max, temp_min)
-                            VALUES (?, ?, ?, ?)
+                    INSERT INTO daily_weather (city_id, temp_max, temp_min)
+                            VALUES (?, ?, ?)
                             """, (city_id,
-                                  str(row["date"]),
                                   float(row["temperature_2m_max"]),
                                   float(row["temperature_2m_min"])))
             except sqlite3.IntegrityError:
@@ -191,6 +189,8 @@ def read_dog_data_json():
 
 ### THE FOLLOWING FUNCTIONS ARE FOR THE CALCULATION PORTION OF THE PROJECT
 
+## Calculation 1:
+
 def calculate_average_high():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -203,7 +203,7 @@ def calculate_average_high():
     conn.close()
     return results
     
-
+## Calculation 2:
 
 def calculate_average_low():
     conn = sqlite3.connect(db_path)
@@ -216,6 +216,8 @@ def calculate_average_low():
     results = cur.fetchall()
     conn.close()
     return results
+
+## Calculation 3:
 
 def total_male_small_dogs():
     conn = sqlite3.connect(db_path)
@@ -230,7 +232,7 @@ def total_male_small_dogs():
             count += 1
     return count
 
-
+## Calculation 4:
 
 def total_male_large_dogs():
     conn = sqlite3.connect(db_path)
@@ -269,7 +271,7 @@ def plot_avg_temps():
     plt.ylabel("Temperature (Farenheight)")
     plt.title("Average High and Low Temps Across 100 Cities (3/2025 to 3/2026)")
     plt.legend()
-    plt.xticks(rotation=45, ha="right")
+    plt.xticks(rotation=45, ha="right", fontsize=6)
     plt.tight_layout()
     plt.show()
 
@@ -285,6 +287,9 @@ def plot_male_dog_weights():
     plt.ylim(0,100)
     plt.tight_layout()
     plt.show()
+
+
+## THIS IS BONUS API CODE
 
 # bonus movie API
 def read_movie_data_json():
@@ -309,38 +314,65 @@ def read_movie_data_json():
     movie_titles = [
         "Inception", "Titanic", "Avatar", "The Dark Knight", "Interstellar",
         "Frozen", "Gladiator", "The Matrix", "Joker", "Toy Story",
-        "The Lion King", "Forrest Gump", "Avengers", "Up", "Shrek",
+        "The Lion King", "Forrest Gump", "The Avengers", "Up", "Shrek",
         "Finding Nemo", "Black Panther", "Iron Man", "Cars", "Coco",
         "Brave", "Moana", "Soul", "Ratatouille", "Monsters Inc",
         "The Godfather", "Pulp Fiction", "Fight Club", "The Shawshank Redemption",
         "La La Land", "Whiplash", "Parasite", "1917", "Dune",
-        "Oppenheimer", "Barbie", "The Social Network", "Get Out", "Her"
+        "Oppenheimer", "Barbie", "The Social Network", "Get Out", "Her",
+        "Airplane", "Guardians of the Galaxy", "Doctor Strange", "Thor Ragnarok",
+        "Spider-Man No Way Home", "Deadpool", "Logan", "Jurassic Park",
+        "Jurassic World", "Jaws", "E.T.", "Harry Potter and the Sorcerer's Stone",
+        "Harry Potter and the Chamber of Secrets", "Harry Potter and the Prisoner of Azkaban",
+        "Harry Potter and the Goblet of Fire", "Harry Potter and the Order of the Phoenix",
+        "Harry Potter and the Half-Blood Prince", "Harry Potter and the Deathly Hallows Part 1",
+        "Harry Potter and the Deathly Hallows Part 2",
+        "The Hunger Games", "Catching Fire", "The Greatest Showman",
+        "Mamma Mia", "Chicago", "Les Miserables", "A Star is Born",
+        "Bohemian Rhapsody", "The Silence of the Lambs", "Se7en", "Gone Girl",
+        "Knives Out", "Glass Onion", "The Prestige", "Memento", "Tenet",
+        "Blade Runner", "Blade Runner 2049", "Mad Max Fury Road",
+        "The Revenant", "Cast Away", "Saving Private Ryan", "Schindler's List",
+        "Goodfellas", "The Departed", "No Country for Old Men", "There Will Be Blood",
+        "12 Years a Slave", "Spotlight", "The Big Short", "Moonlight",
+        "Us", "Hereditary", "Midsommar", "A Quiet Place",
+        "Everything Everywhere All at Once", "The Banshees of Inisherin",
+        "Tar", "Belfast", "CODA", "Nomadland", "The Father", "Baby Boom"
     ]
+    cur.execute("SELECT title FROM movies")
+    existing_titles = {row[0] for row in cur.fetchall()}
 
     for title in movie_titles:
         if rows_added >= max_per_run:
             break
 
-        url = f"http://www.omdbapi.com/?apikey=1846eeb9&t={title}"
+        url = f"https://www.omdbapi.com/?apikey=bb001667&t={title}"
 
         try:
             data = requests.get(url).json()
 
-            if data["Response"] == "True":
-                metascore = data.get("Metascore")
-                metascore = int(metascore) if metascore != "N/A" else None
+            if data.get("Response") != "True":
+                print(f"FAILED OMDb lookup: {title}")
+                continue
+            
+            omdb_title = data.get("Title")
+            if omdb_title in existing_titles:
+                continue
+            metascore = data.get("Metascore")
+            metascore = int(metascore) if metascore != "N/A" else None
 
-                cur.execute("""
-                    INSERT OR IGNORE INTO movies (title, year, rating, metascore)
+            cur.execute("""
+                    INSERT INTO movies (title, year, rating, metascore)
                     VALUES (?, ?, ?, ?)
                 """, (
-                    data.get("Title"),
+                    omdb_title,
                     data.get("Year"),
                     data.get("imdbRating"),
                     metascore
                 ))
 
-                rows_added += 1
+            existing_titles.add(omdb_title)
+            rows_added += 1
 
         except Exception as e:
             print(f"Error with {title}: {e}")
@@ -348,7 +380,6 @@ def read_movie_data_json():
 
     conn.commit()
     conn.close()
-
 
 def average_movie_score():
     conn = sqlite3.connect(db_path)

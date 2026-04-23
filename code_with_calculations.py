@@ -49,10 +49,9 @@ def setup_database():
         CREATE TABLE IF NOT EXISTS daily_weather (
                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                    city_id INTEGER,
-                   date TEXT,
                    temp_max REAL,
                    temp_min REAL,
-                   UNIQUE(city_id, date))
+                   UNIQUE(city_id))
                    """)
     
     cursor.execute("""
@@ -138,10 +137,9 @@ def read_weather_data_json():
         for _, row in daily_dataframe.iterrows():
             try:
                 cur.execute("""
-                    INSERT INTO daily_weather (city_id, date, temp_max, temp_min)
-                            VALUES (?, ?, ?, ?)
+                    INSERT INTO daily_weather (city_id, temp_max, temp_min)
+                            VALUES (?, ?, ?)
                             """, (city_id,
-                                  str(row["date"]),
                                   float(row["temperature_2m_max"]),
                                   float(row["temperature_2m_min"])))
             except sqlite3.IntegrityError:
@@ -241,24 +239,21 @@ def total_male_small_dogs():
 
 ## Calculation 4:
 
-def count_cities_above_72():
+def total_male_large_dogs():
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
-    cur.execute("""
-        SELECT COUNT (*)
-        FROM (
-                SELECT c.city_name, AVG(w.temp_max) AS avg_high
-                FROM cities c
-                JOIN daily_weather w
-                    ON c.city_id = w.city_id
-                GROUP BY c.city_name
-                HAVING avg_high > 72)
-                """)
-    result = cur.fetchone()[0]
+    cur.execute("SELECT male_weight FROM dog_breeds")
+    rows = cur.fetchall()
     conn.close()
-    return result
+    count = 0
+    for row in rows:
+        weight = json.loads(row[0])
+        if weight["max"] > 50:
+            count += 1
+    return count
 
-# bonus movie API
+## THIS IS THE BONUS API CODE
+
 def read_movie_data_json():
     setup_database()
     conn = sqlite3.connect(db_path)
@@ -281,38 +276,65 @@ def read_movie_data_json():
     movie_titles = [
         "Inception", "Titanic", "Avatar", "The Dark Knight", "Interstellar",
         "Frozen", "Gladiator", "The Matrix", "Joker", "Toy Story",
-        "The Lion King", "Forrest Gump", "Avengers", "Up", "Shrek",
+        "The Lion King", "Forrest Gump", "The Avengers", "Up", "Shrek",
         "Finding Nemo", "Black Panther", "Iron Man", "Cars", "Coco",
         "Brave", "Moana", "Soul", "Ratatouille", "Monsters Inc",
         "The Godfather", "Pulp Fiction", "Fight Club", "The Shawshank Redemption",
         "La La Land", "Whiplash", "Parasite", "1917", "Dune",
-        "Oppenheimer", "Barbie", "The Social Network", "Get Out", "Her"
+        "Oppenheimer", "Barbie", "The Social Network", "Get Out", "Her",
+        "Airplane", "Guardians of the Galaxy", "Doctor Strange", "Thor Ragnarok",
+        "Spider-Man No Way Home", "Deadpool", "Logan", "Jurassic Park",
+        "Jurassic World", "Jaws", "E.T.", "Harry Potter and the Sorcerer's Stone",
+        "Harry Potter and the Chamber of Secrets", "Harry Potter and the Prisoner of Azkaban",
+        "Harry Potter and the Goblet of Fire", "Harry Potter and the Order of the Phoenix",
+        "Harry Potter and the Half-Blood Prince", "Harry Potter and the Deathly Hallows Part 1",
+        "Harry Potter and the Deathly Hallows Part 2",
+        "The Hunger Games", "Catching Fire", "The Greatest Showman",
+        "Mamma Mia", "Chicago", "Les Miserables", "A Star is Born",
+        "Bohemian Rhapsody", "The Silence of the Lambs", "Se7en", "Gone Girl",
+        "Knives Out", "Glass Onion", "The Prestige", "Memento", "Tenet",
+        "Blade Runner", "Blade Runner 2049", "Mad Max Fury Road",
+        "The Revenant", "Cast Away", "Saving Private Ryan", "Schindler's List",
+        "Goodfellas", "The Departed", "No Country for Old Men", "There Will Be Blood",
+        "12 Years a Slave", "Spotlight", "The Big Short", "Moonlight",
+        "Us", "Hereditary", "Midsommar", "A Quiet Place",
+        "Everything Everywhere All at Once", "The Banshees of Inisherin",
+        "Tar", "Belfast", "CODA", "Nomadland", "The Father", "Baby Boom"
     ]
+    cur.execute("SELECT title FROM movies")
+    existing_titles = {row[0] for row in cur.fetchall()}
 
     for title in movie_titles:
         if rows_added >= max_per_run:
             break
 
-        url = f"http://www.omdbapi.com/?apikey=1846eeb9&t={title}"
+        url = f"https://www.omdbapi.com/?apikey=bb001667&t={title}"
 
         try:
             data = requests.get(url).json()
 
-            if data["Response"] == "True":
-                metascore = data.get("Metascore")
-                metascore = int(metascore) if metascore != "N/A" else None
+            if data.get("Response") != "True":
+                print(f"FAILED OMDb lookup: {title}")
+                continue
+            
+            omdb_title = data.get("Title")
+            if omdb_title in existing_titles:
+                continue
+            metascore = data.get("Metascore")
+            metascore = int(metascore) if metascore != "N/A" else None
 
-                cur.execute("""
-                    INSERT OR IGNORE INTO movies (title, year, rating, metascore)
+            cur.execute("""
+                    INSERT INTO movies (title, year, rating, metascore)
                     VALUES (?, ?, ?, ?)
                 """, (
-                    data.get("Title"),
+                    omdb_title,
                     data.get("Year"),
                     data.get("imdbRating"),
                     metascore
                 ))
 
-                rows_added += 1
+            existing_titles.add(omdb_title)
+            rows_added += 1
 
         except Exception as e:
             print(f"Error with {title}: {e}")
@@ -343,7 +365,7 @@ def write_calculations_to_file(filename="calculation_results.txt"):
     avg_highs = calculate_average_high()
     avg_lows = calculate_average_low()
     small_male_dogs = total_male_small_dogs()
-    high_temp_above_72 = count_cities_above_72()
+    large_male_dogs = total_male_large_dogs()
     avg_movie = average_movie_score()
     with open(file_path, "w") as f:
         f.write("Average High Temperatures by City:\n")
@@ -354,8 +376,7 @@ def write_calculations_to_file(filename="calculation_results.txt"):
             f.write(f"{city_id}: {avg:.2f} F\n")
         f.write("\nDog Breed Results:\n")
         f.write(f"Total small male dog breeds (under 20 lbs): {small_male_dogs}\n")
-        f.write("\nHigh Temperature Results:\n")
-        f.write(f"Total cities with high temperatures above 72 degrees: {high_temp_above_72}\n")
+        f.write(f"Total large male dog breeds (over 50 lbs): {large_male_dogs}\n")
         f.write("\nMovie Results:\n")
         if avg_movie is not None:
             f.write(f"Average movie score: {avg_movie:.2f}\n")
@@ -369,6 +390,6 @@ if __name__ == "__main__":
     calculate_average_high()
     calculate_average_low()
     total_male_small_dogs()
+    total_male_large_dogs()
     read_movie_data_json()
-    count_cities_above_72()
     write_calculations_to_file()
